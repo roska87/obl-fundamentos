@@ -1,7 +1,7 @@
--- Autor:
--- Numero de estudiante:
--- Autor:
--- Numero de estudiante:
+-- Autor: Ari Rostkier
+-- Numero de estudiante: 136300
+-- Autor: Vicente Bermúdez
+-- Numero de estudiante: 214831
 
 {-# OPTIONS_GHC -fno-warn-tabs #-}
 {-#LANGUAGE GADTs#-}
@@ -46,15 +46,76 @@ infixr 3 :>
 -- Memoria y evaluación de expresiones
 -- 1 
 (@@) :: Var -> Memoria -> Int
-(@@) = undefined
+(@@) = \v -> \m -> case m of {
+	[] -> error "La variable no se encuentra en la memoria";
+	x:xs -> case v == (fst x) of {
+		True -> snd x;
+		False -> v @@ xs;
+	}
+}
 
 -- 2
 upd :: (Var,Int) -> Memoria -> Memoria
-upd = undefined
+upd = \t -> \m -> case m of {
+	[] -> [t];
+	x:[] -> case (fst t) == (fst x) of {
+		True -> [(fst t, snd t)];
+		False -> x:(upd t []);
+	};
+	x:xs -> case (fst t) == (fst x) of {
+		True -> (fst t, snd t):(upd t xs);
+		False -> x:(upd t xs);
+	}
+}
 
 -- 3
+
+(&&&&) :: Int -> Int -> Int
+(&&&&) = \a -> \b -> case (b == 0) of {
+	True -> 0;
+	False -> case (a > 0) of {
+		True -> 1;
+		False -> 0;
+	}
+}
+
+(||||) :: Int -> Int -> Int
+(||||) = \a -> \b -> case ((a + b) > 0) of {
+	True -> 1;
+	False -> 0;
+}
+
 eval :: Exp -> Memoria -> Int
-eval = undefined
+eval = \e -> \m -> case m of {
+	[] -> 0;
+	x:xs -> case e of {
+		I n -> n;
+		(:+) i d -> case i of {
+			I n -> n + (eval d m);
+			V v -> (v @@ m) + (eval d m);
+		};
+		(:*) i d -> case i of {
+			I n -> n * (eval d m);
+			V v -> (v @@ m) * (eval d m);
+		};
+		(:-) i d -> case i of {
+			I n -> n - (eval d m);
+			V v -> (v @@ m) - (eval d m);
+		};
+		(:&&) i d -> case i of {
+			I n -> n && (eval d m);
+			V v -> (v @@ m) &&&& (eval d m);
+		};
+		(:||) i d -> case i of {
+			I n -> n || (eval d m);
+			V v -> (v @@ m) |||| (eval d m);
+		};
+		(:==) i d -> case i of {
+			I n -> n == (eval d m);
+			V v -> (v @@ m) == (eval d m);
+		};
+	}
+}
 
 
 
