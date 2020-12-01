@@ -85,10 +85,17 @@ upd = \t -> \m -> case m of {
 	False -> 0;
 }
 
+(====) :: Int -> Int -> Int
+(====) = \a -> \b -> case ((a - b) == 0) of {
+	True -> 1;
+	False -> 0;
+}
+
 eval :: Exp -> Memoria -> Int
 eval = \e -> \m -> case m of {
 	[] -> 0;
 	x:xs -> case e of {
+		V n -> n @@ m;
 		I n -> n;
 		(:+) i d -> case i of {
 			I n -> n + (eval d m);
@@ -103,16 +110,20 @@ eval = \e -> \m -> case m of {
 			V v -> (v @@ m) - (eval d m);
 		};
 		(:&&) i d -> case i of {
-			I n -> n && (eval d m);
+			I n -> n &&&& (eval d m);
 			V v -> (v @@ m) &&&& (eval d m);
 		};
 		(:||) i d -> case i of {
-			I n -> n || (eval d m);
+			I n -> n |||| (eval d m);
 			V v -> (v @@ m) |||| (eval d m);
 		};
 		(:==) i d -> case i of {
-			I n -> n == (eval d m);
-			V v -> (v @@ m) == (eval d m);
+			I n -> n ==== (eval d m);
+			V v -> (v @@ m) ==== (eval d m);
+		};
+		Not n -> case (eval n m) of {
+			0 -> 1;
+			1 -> 0;
 		};
 	}
 }
