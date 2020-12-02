@@ -63,7 +63,7 @@ upd = \t -> \m -> case m of {
 		False -> x:(upd t []);
 	};
 	x:xs -> case (fst t) == (fst x) of {
-		True -> (fst t, snd t):(upd t xs);
+		True -> (fst t, snd t):xs;
 		False -> x:(upd t xs);
 	}
 }
@@ -113,8 +113,38 @@ eval = \e -> \m -> case e of {
 -- Ejecución de programas
 -- 4
 run :: Prog -> Memoria -> Memoria
-run = undefined
+run = \p -> \m -> case p of {
+	Asig l -> assign l m;
+	(:>) p1 p2 -> run p2 (run p1 m);
+	Cond l -> conditional l m;
+	While e p -> while_exec e p m;
+}
+
+while_exec :: Exp -> Prog -> Memoria -> Memoria
+while_exec = \e -> \p -> \m -> case (eval e m) == 0 of {
+	True -> m;
+	False -> while_exec e p (run p m);
+}
+
+conditional :: [(Exp, Prog)] -> Memoria -> Memoria
+conditional = \c -> \m -> case c of {
+	[] -> m;
+	x:[] -> case (eval (fst x) m) == 0 of {
+		True -> conditional [] m;
+		False -> run (snd x) m;
+	};
+	x:xs -> case (eval (fst x) m) == 0 of {
+		True -> conditional xs m;
+		False -> conditional xs (run (snd x) m);
+	};
+}
 										
+assign :: [(Var,Exp)] -> Memoria -> Memoria
+assign = \l -> \m -> case l of {
+	[] -> m;
+	x:[] -> upd ((fst x), (eval (snd x) m)) m;
+	x:xs -> upd ((fst x), (eval (snd x) m)) (assign xs m);
+}
 
 
 -- Ejemplos de programas
