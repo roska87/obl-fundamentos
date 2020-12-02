@@ -103,9 +103,9 @@ eval = \e -> \m -> case e of {
 	(:&&) i d -> eval_action i d m (&&&&);
 	(:||) i d -> eval_action i d m (||||);
 	(:==) i d -> eval_action i d m (====);
-	Not n -> case (eval n m) of {
-		0 -> 1;
-		1 -> 0;
+	Not n -> case (eval n m) == 0 of {
+		True -> 1;
+		False -> 0;
 	};
 }
 
@@ -165,15 +165,27 @@ p2 = Asig [("x" , I 27), ("y", I 5)]
 
 -- 5
 swap:: Prog
-swap = undefined
+swap = Asig [("aux", V "x")] :> 
+		Asig [("x", V "y")] :> 
+		Asig [("y", V "aux")]
 
 -- 6
 fact :: Int -> Prog
-fact = \n -> undefined
+fact = \n -> Asig [("n", I n)] :> 
+	Asig [("fact", I 1)] :> 
+	While (V "n") (
+		Asig [("fact", V "fact" :* V "n")] :> 
+		Asig [("n", V "n" :- I 1)]
+	)
 
 -- 7
 par :: Int -> Prog
-par = \n -> undefined
+par = \n -> Asig [("n", I n)] :>
+	Asig [("par", I 1)] :>
+	While (V "n") (
+		Asig [("par", Not (V "par"))] :>
+		Asig [("n", V "n" :- I 1)]
+	)
 			
 -- 8
 mini :: Int -> Int -> Prog
