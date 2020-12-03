@@ -189,13 +189,38 @@ par = \n -> Asig [("n", I n)] :>
 			
 -- 8
 mini :: Int -> Int -> Prog
-mini = \m n -> undefined
+mini = \m n ->
+	Asig [("m", I m)] :> 
+	Asig [("n", I n)] :>
+	Cond [
+		(
+			(V "n" :+ I 1) :&& (V "m" :+ I 1),  
+			Cond [
+				(V "m" :- V "n", Asig[("min", V "n")]),
+				(Not (V "m" :- V "n"), Asig[("min", V "m")])
+			]
+		)
+	]
 
 -- 9
 fib :: Int -> Prog 
-fib = \n -> undefined
-
-
+fib = \n -> 
+	Asig[("pos_target", I n)] :>
+	Asig[("pos_index", I 2)] :>
+	Asig[("pos_last", I 0)] :>
+	Asig[("pos_curr", I 1)] :>
+	Cond [
+		(
+			V "pos_target",
+			While (Not (V "pos_index" :== V "pos_target" :+ I 1)) (
+				Asig[("pos_aux", V "pos_curr")] :>
+				Asig[("pos_curr", V "pos_last" :+ V "pos_aux")] :>
+				Asig[("pos_last", V "pos_curr")] :>
+				Asig[("pos_index", V "pos_index" :+ I 1)]
+			) :>
+			Asig[("fib", V "pos_last")]
+		)
+	]
 
 -- Para probar los programas fact, par, mini y fib recomendamos utilizar las siguientes funciones:									
 
