@@ -192,35 +192,29 @@ mini :: Int -> Int -> Prog
 mini = \m n ->
 	Asig [("m", I m)] :> 
 	Asig [("n", I n)] :>
-	Cond [
-		(
-			(V "n" :+ I 1) :&& (V "m" :+ I 1),  
-			Cond [
-				(V "m" :- V "n", Asig[("min", V "n")]),
-				(Not (V "m" :- V "n"), Asig[("min", V "m")])
-			]
-		)
-	]
+	Asig[("i", I 0)] :>
+	While (Not (V "i" :== V "n") :&& Not (V "i" :== V "m")) (
+		Asig [("i", V "i" :+ I 1)]
+	) :>
+	Cond[(V "i" :== V "m", Asig[("min", V "m")]), (V "i" :== V "n", Asig[("min", V "n")])]
+
 
 -- 9
 fib :: Int -> Prog 
 fib = \n -> 
 	Asig[("pos_target", I n)] :>
-	Asig[("pos_index", I 2)] :>
-	Asig[("pos_last", I 0)] :>
-	Asig[("pos_curr", I 1)] :>
-	Cond [
-		(
-			V "pos_target",
-			While (Not (V "pos_index" :== V "pos_target" :+ I 1)) (
-				Asig[("pos_aux", V "pos_curr")] :>
-				Asig[("pos_curr", V "pos_last" :+ V "pos_aux")] :>
-				Asig[("pos_last", V "pos_curr")] :>
-				Asig[("pos_index", V "pos_index" :+ I 1)]
-			) :>
-			Asig[("fib", V "pos_last")]
-		)
-	]
+	Cond[(V "pos_target" :== I 1, Asig[("fib", I 1)]), (Not (V "pos_target" :== I 0) :&& Not (V "pos_target" :== I 1), 
+		Asig[("pos_index", I 2)] :>
+		Asig[("pos_last", I 1)] :>
+		Asig[("pos_curr", I 1)] :>
+		While (Not (V "pos_index" :== V "pos_target" :+ I 1)) (
+			Asig[("pos_aux", V "pos_curr")] :>
+			Asig[("pos_curr", V "pos_last" :+ V "pos_aux")] :>
+			Asig[("pos_last", V "pos_aux")] :>
+			Asig[("pos_index", V "pos_index" :+ I 1)]
+		) :>
+		Asig[("fib", V "pos_last")]
+	)]
 
 -- Para probar los programas fact, par, mini y fib recomendamos utilizar las siguientes funciones:									
 
@@ -230,7 +224,7 @@ esPar = \n -> pre (n >= 0) "par: argumento negativo"  ("par" @@ (run (par n) [])
 
 minimo = \m n -> pre (m >= 0 && n >= 0) "mini: argumento negativo"   ("min" @@ run (mini m n) [])
 
-fibonacci = \n -> pre (n >= 0) "fib: argumento negativo"   ("fib" @@ run (fib n) [])
+fibonacci = \n -> pre (n >= 0) "fib: argumento negativo"  ("fib" @@ run (fib n) [])
 
 
 -- Se usa pre para poder verificar que los argumentos sean válidos
